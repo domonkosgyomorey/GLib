@@ -1,0 +1,1 @@
+gcc src/main.c -o bin/main -D GLEW_STATIC -lglew32 -lglfw3 -lopengl32 -lgdi32 -lm -lcglm
