@@ -55,9 +55,9 @@ extern "C" {
 */
 typedef struct {
     float* vertices;
-    unsigned int vertex_count;
+    unsigned int vertex_len;
     unsigned int* indices;
-    unsigned int index_count;
+    unsigned int index_len;
 
     int VBO, EBO, VAO;
 } glib_obj_t;
@@ -137,14 +137,14 @@ void glib_main_loop(void);
     @brief Create an object from your vertices and indices. This function also stores the VAO, VBO, EBO which is usefull for renderering this object
 
     @param vertices the pointer to your vertices array
-    @param vertices_count the amount of vetex has in the vertices array
+    @param vertices_len the len of vertices array
     @param indices the pointer to your indices array
-    @param indices_count the amount of index  has in the indices array
+    @param indices_len the len of indices array
 
     @return The object struct which stores some data
 
 */
-glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_count, unsigned int* indices, unsigned int indices_count);
+glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_len, unsigned int* indices, unsigned int indices_len);
 
 /*
     @brief  Draw triangles using an glib obj
@@ -164,14 +164,24 @@ void glib_wired_draw(void);
 void glib_filled_draw(void);
 
 /*
-    @brief Create a shader program
+    @brief Create a shader program from file
 
     @param vert_file_path is the file path to your vertex shader file
     @param frag_file_path is the file path to your fragment shader file
 
     @return The shader program ID
 */
-unsigned int create_shader(const char* vert_file_path, const char* frag_file_path);
+unsigned int glib_create_shader(const char* vert_file_path, const char* frag_file_path);
+
+/*
+    @brief Create a shader program from memory
+
+    @param vert_src is the vertex source code
+    @param frag_src is the fragment source code
+
+    @return The shader program ID
+*/
+unsigned int glib_create_shader_from_memory(const char* vert_src, const char* frag_src);
 
 /*
     @brief Apply shader for the further objects
@@ -288,11 +298,38 @@ const char default_tex_jpg_raw[] = {0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x
 0xFA, 0xFF, 0xDA, 0x00, 0x0C, 0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3F, 0x00, 0xFD, 
 0xFC, 0xA2, 0x8A, 0x28, 0x03, 0xFF, 0xD9};
 
+const char* default_vert = {
+        "#version 330 core\n"
+        "layout (location = 0) in vec3 pos;\n"
+        "layout (location = 1) in vec3 col;\n"
+        "layout (location = 2) in vec2 tex_coord;\n"
+        "out vec3 b_col;\n"
+        "out vec2 b_tex_coord;\n"
+        "void main(){\n"
+            "b_col = col;\n"
+            "b_tex_coord = tex_coord;\n"
+            "gl_Position = vec4(pos, 1.0);\n"
+        "}\n"
+};
+
+const char* default_frag = {
+    "#version 330 core\n"
+    "in vec3 b_col;\n"
+    "in vec2 b_tex_coord;\n"
+    "uniform sampler2D tex0;\n"
+    "out vec4 FragColor;\n"
+    "void main(){\n"
+        "FragColor = texture(tex0, b_tex_coord)*vec4(b_col, 1.0);\n"
+    "}\n"
+};
+
 GLFWwindow* glib_window;
 
 void (*glib_render_fun)(void) = NULL;
 
 unsigned int default_tex;
+
+unsigned int default_shader;
 
 char* read_from_file(const char* file_name){
     FILE *fp;
@@ -349,6 +386,8 @@ void glib_create_window(int width, int height, const char* title){
         exit(-1);
     }
 
+    default_shader = glib_create_shader_from_memory(default_vert, default_frag);
+
     default_tex = glib_load_texture_2d_from_memory(default_tex_jpg_raw, GLIB_ARRAY_LEN(default_tex_jpg_raw), 0);
     glEnable(GL_DEPTH_TEST);
 }
@@ -366,6 +405,7 @@ void glib_main_loop(void){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         glib_use_texture_2d(default_tex, GLIB_TEX_SLOT0);
+        glib_use_shader(default_shader);
         if(glib_render_fun!=NULL){
             glib_render_fun();
         }
@@ -378,7 +418,7 @@ void glib_main_loop(void){
     glfwTerminate();
 }
 
-glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_count, unsigned int* indices, unsigned int indices_count){
+glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_len, unsigned int* indices, unsigned int indices_len){
     unsigned int VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -388,10 +428,10 @@ glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_count, unsign
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertices_count, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertices_len, vertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indices_count, indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indices_len, indices, GL_STATIC_DRAW);
     // Coord
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -414,15 +454,15 @@ glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_count, unsign
     obj->VBO = VBO;
     obj->EBO = EBO;
     obj->vertices = vertices;
-    obj->vertex_count = vertices_count;
+    obj->vertex_len = vertices_len;
     obj->indices = indices;
-    obj->index_count = indices_count;
+    obj->index_len = indices_len;
     return obj;
 }
 
 void glib_draw_triangles(glib_obj_t* obj){
     glBindVertexArray(obj->VAO);
-    glDrawElements(GL_TRIANGLES, obj->index_count, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, obj->index_len, GL_UNSIGNED_INT, 0);
 }
 
 void glib_wired_draw(){
@@ -433,20 +473,21 @@ void glib_filled_draw(){
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
-void glib_use_shader(int shader_id){
-    glUseProgram(shader_id);
-}
-
-int compile_shader(GLenum shader_type, const char* shader_file_path){
+int compile_shader(GLenum shader_type, const char* shader_thing, int from_memory){
     GLint is_compiled = 0;
     /* Calls the Function that loads the Shader source code from a file */
-    const char* shader_source = read_from_file(shader_file_path); 
-
-    printf("%s: %s\n", shader_file_path, shader_source);
+    const char* shader_source;
+    if(from_memory){
+        shader_source = shader_thing;
+        printf("%s\n", shader_source);
+    }else{
+        shader_source = read_from_file(shader_thing); 
+        printf("%s: %s\n", shader_thing, shader_source);
+    }
 
     int shader_id = glCreateShader(shader_type);
     if(shader_id == 0) {
-        printf("COULD NOT LOAD SHADER: %s!\n", shader_file_path);
+        printf("COULD NOT LOAD SHADER: %s!\n", from_memory?shader_thing:"");
         exit(-1);
     }
 
@@ -461,7 +502,7 @@ int compile_shader(GLenum shader_type, const char* shader_file_path){
         glGetShaderInfoLog(shader_id, max_len, &max_len, info_log);
 
         printf("%s\n", info_log);
-        fprintf(stderr, "Shader Compiler Error: %s\n", shader_file_path);
+        fprintf(stderr, "Shader Compiler Error: %s\n", from_memory?shader_thing:"");
         glDeleteShader(shader_id);
         exit(-1);
     }
@@ -508,11 +549,22 @@ int link_shader(GLuint vertex_shader_id, GLuint fragment_shader_id){
     return program_id;
 }
 
-unsigned int create_shader(const char* vert_file_path, const char* frag_file_path){
-    GLuint vert_id = compile_shader(GL_VERTEX_SHADER, vert_file_path);
-    GLuint frag_id = compile_shader(GL_FRAGMENT_SHADER, frag_file_path);
+unsigned int glib_create_shader(const char* vert_file_path, const char* frag_file_path){
+    GLuint vert_id = compile_shader(GL_VERTEX_SHADER, vert_file_path, 0);
+    GLuint frag_id = compile_shader(GL_FRAGMENT_SHADER, frag_file_path, 0);
     
     return link_shader(vert_id, frag_id);
+}
+
+unsigned int glib_create_shader_from_memory(const char* vert_src, const char* frag_src){
+    GLuint vert_id = compile_shader(GL_VERTEX_SHADER, vert_src, 1);
+    GLuint frag_id = compile_shader(GL_FRAGMENT_SHADER, frag_src, 1);
+    
+    return link_shader(vert_id, frag_id);
+}
+
+void glib_use_shader(int shader_id){
+    glUseProgram(shader_id);
 }
 
 void glib_set_uniform1i(int program_id, const char* name, int value){

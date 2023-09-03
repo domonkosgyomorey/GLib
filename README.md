@@ -3,9 +3,17 @@ This header only library is an OpenGL ovarlay and also my learning process
 
 I dev this project on [mysys2](https://www.msys2.org/) with "mysys2 ucrt x64 gcc"
 
-## Build
+## Build and run
+
 ```console
 ./build.bat
+./bin/main.exe
+```
+
+Build examples:
+```console
+./build_examples.bat
+./bin/"example_names".exe
 ```
 
 ## Dependencies
