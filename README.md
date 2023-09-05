@@ -52,3 +52,4 @@ __The output:__
 - [glfw](https://www.glfw.org/)
 - [glew](https://glew.sourceforge.net/)
 - [cglm](https://github.com/recp/cglm)
+- [make](https://www.gnu.org/software/make/)
