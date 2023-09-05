@@ -299,17 +299,17 @@ const char default_tex_jpg_raw[] = {0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x
 0xFC, 0xA2, 0x8A, 0x28, 0x03, 0xFF, 0xD9};
 
 const char* default_vert = {
-        "#version 330 core\n"
-        "layout (location = 0) in vec3 pos;\n"
-        "layout (location = 1) in vec3 col;\n"
-        "layout (location = 2) in vec2 tex_coord;\n"
-        "out vec3 b_col;\n"
-        "out vec2 b_tex_coord;\n"
-        "void main(){\n"
-            "b_col = col;\n"
-            "b_tex_coord = tex_coord;\n"
-            "gl_Position = vec4(pos, 1.0);\n"
-        "}\n"
+    "#version 330 core\n"
+    "layout (location = 0) in vec3 pos;\n"
+    "layout (location = 1) in vec3 col;\n"
+    "layout (location = 2) in vec2 tex_coord;\n"
+    "out vec3 b_col;\n"
+    "out vec2 b_tex_coord;\n"
+    "void main(){\n"
+        "b_col = col;\n"
+        "b_tex_coord = tex_coord;\n"
+        "gl_Position = vec4(pos, 1.0);\n"
+    "}\n"
 };
 
 const char* default_frag = {
