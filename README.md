@@ -6,13 +6,13 @@ I dev this project on [mysys2](https://www.msys2.org/) with "mysys2 ucrt x64 gcc
 ## Build and run
 
 ```console
-./build.bat
+make main
 ./bin/main.exe
 ```
 
 Build examples:
 ```console
-./build_examples.bat
+make examples
 ./bin/"example_names".exe
 ```
 
