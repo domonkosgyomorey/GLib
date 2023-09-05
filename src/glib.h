@@ -49,8 +49,9 @@ extern "C" {
 #endif
 
 #define GLIB_ARRAY_LEN(ARR) (sizeof(ARR)/sizeof(ARR[0]))
+#define GLIB_HEX_TO_RGBA_F(H) ((H>>24)&0xFF)/255.0f, ((H>>16)&0xFF)/255.0f, ((H>>8)&0xFF)/255.0f, ((H>>0)&0xFF)/255.0f
 
-/*
+/*!
     @breif this struct stores some data for a whole object and used in renderering that
 */
 typedef struct {
@@ -63,7 +64,7 @@ typedef struct {
 } glib_obj_t;
 
 
-/*
+/*!
     @brief This enum contains the currently available texture slots. The slot 0 is the default texture slot which is used by default
 */
 typedef enum {
@@ -88,7 +89,7 @@ typedef enum {
     GLIB_TEX_SLOT_COUNT,
 } glib_texture_slot;
 
-/* 
+/*!
     @brief Read content from a file into an allocated buffer
 
     @param file_name is the file path to the file
@@ -97,12 +98,12 @@ typedef enum {
 */
 char* read_from_file(const char* file_name);
 
-/*
+/*!
     @brief Init OpenGL and other stuff
 */
 void glib_init(void);
 
-/*
+/*!
     @brief  Create a window
 
     @param width is the width of the window in pixels
@@ -111,7 +112,7 @@ void glib_init(void);
 */
 void glib_create_window(int width, int height, const char* title);
 
-/*
+/*!
     @brief Set clear color
 
     @param r red    0-1
@@ -121,19 +122,26 @@ void glib_create_window(int width, int height, const char* title);
 */
 void glib_clear_color(float r, float g, float b, float a);
 
-/*
+/*!
     @brief Accept a function which run every rendering frame. This function stores your own little rendering function
 
-    @param render is a function format for a rendering fun
+    @param glib_render_fun is a function format for a rendering fun
 */
-void glib_render_callback(void(*render)(void));
+void glib_set_render_callback(void (*glib_render_fun)(void));
 
-/*
+/*!
+    @brief Accept a function which run when the framebuffer change.
+
+    @param glib_framebuffer_resize_fun is a function format for a rendering fun
+*/
+void glib_set_framebuffer_resize_callback(void (*glib_framebuffer_resize_fun)(int width, int height));
+
+/*!
     @brief Start the main loop and call the stored render function
 */
 void glib_main_loop(void);
 
-/*
+/*!
     @brief Create an object from your vertices and indices. This function also stores the VAO, VBO, EBO which is usefull for renderering this object
 
     @param vertices the pointer to your vertices array
@@ -146,24 +154,43 @@ void glib_main_loop(void);
 */
 glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_len, unsigned int* indices, unsigned int indices_len);
 
-/*
+/*!
+    @brief Create a triangle object from coords
+
+    @return The glib object reference which stores some data
+*/
+glib_obj_t* glib_create_triangle_obj(float x1, float y1, float x2, float y2, float x3, float y3);
+
+/*!
+    @brief Create a triangle object from coords
+
+    @param rgba_hex A color format example r:255 g:0 b:0 a:255 => 0xFF0000FF
+
+    @return The glib object reference which stores some data
+*/
+glib_obj_t* glib_create_triangle_obj_ex(float x1, float y1, float x2, float y2, float x3, float y3, int rgba_hex);
+
+glib_obj_t* glib_create_quad_obj(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
+glib_obj_t* glib_create_quad_obj_ex(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, int rgba_hex);
+
+/*!
     @brief  Draw triangles using an glib obj
 
     @param obj is the glib obj
 */
-void glib_draw_triangles(glib_obj_t* obj);
+void glib_draw_obj(glib_obj_t* obj);
 
-/*
+/*!
     @brief Draw just the frame around an object
 */
 void glib_wired_draw(void);
 
-/*
+/*!
     @brief Draw the filled shape
 */
 void glib_filled_draw(void);
 
-/*
+/*!
     @brief Create a shader program from file
 
     @param vert_file_path is the file path to your vertex shader file
@@ -173,7 +200,7 @@ void glib_filled_draw(void);
 */
 unsigned int glib_create_shader(const char* vert_file_path, const char* frag_file_path);
 
-/*
+/*!
     @brief Create a shader program from memory
 
     @param vert_src is the vertex source code
@@ -183,14 +210,14 @@ unsigned int glib_create_shader(const char* vert_file_path, const char* frag_fil
 */
 unsigned int glib_create_shader_from_memory(const char* vert_src, const char* frag_src);
 
-/*
+/*!
     @brief Apply shader for the further objects
 
     @param shader_id is the ID of your shader program
 */
 void glib_use_shader(int shader_id);
 
-/*
+/*!
     @brief Upload int value into a shader
 
     @param program_id is your shader program ID
@@ -199,7 +226,7 @@ void glib_use_shader(int shader_id);
 */ 
 void glib_set_uniform1i(int program_id, const char* name, int value);
 
-/*
+/*!
     @brief Upload float value into a shader
 
     @param program_id is your shader program ID
@@ -208,7 +235,7 @@ void glib_set_uniform1i(int program_id, const char* name, int value);
 */ 
 void glib_set_uniform1f(int program_id, const char* name, float value);
 
-/*
+/*!
     @brief Upload double value into a shader
 
     @param program_id is your shader program ID
@@ -217,7 +244,7 @@ void glib_set_uniform1f(int program_id, const char* name, float value);
 */ 
 void glib_set_uniform1d(int program_id, const char* name, double value);
 
-/*
+/*!
     @brief Upload matrix 4x4 value into a shader
 
     @param program_id is your shader program ID
@@ -226,7 +253,7 @@ void glib_set_uniform1d(int program_id, const char* name, double value);
 */ 
 void glib_set_unifrom_mat4(int program_id, const char* name, mat4 value);
 
-/*
+/*!
     @brief Load 2D texture from file. This 2D texture loader only work with the following color channel formats: RGBA, RGB 
 
     @param file_path is your file path into the texture
@@ -236,7 +263,7 @@ void glib_set_unifrom_mat4(int program_id, const char* name, mat4 value);
 */
 unsigned int glib_load_texture_2d(const char* file_path, unsigned char has_alpha);
 
-/*
+/*!
     @brief Load 2D texture from memory. This 2D texture loader only work with the following color channel formats: RGBA, RGB 
 
     @param raw_data is your raw texture data
@@ -247,7 +274,7 @@ unsigned int glib_load_texture_2d(const char* file_path, unsigned char has_alpha
 */
 unsigned int glib_load_texture_2d_from_memory(const char* raw_data, unsigned int data_len, unsigned char has_alpha);
 
-/*
+/*!
     @brief Activate and use a texture. The texture slot 0 is not available, bacause the library use it for the default texture
 
     @param texure is the texure ID
@@ -301,9 +328,9 @@ const char default_tex_jpg_raw[] = {0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x
 const char* default_vert = {
     "#version 330 core\n"
     "layout (location = 0) in vec3 pos;\n"
-    "layout (location = 1) in vec3 col;\n"
+    "layout (location = 1) in vec4 col;\n"
     "layout (location = 2) in vec2 tex_coord;\n"
-    "out vec3 b_col;\n"
+    "out vec4 b_col;\n"
     "out vec2 b_tex_coord;\n"
     "void main(){\n"
         "b_col = col;\n"
@@ -314,18 +341,19 @@ const char* default_vert = {
 
 const char* default_frag = {
     "#version 330 core\n"
-    "in vec3 b_col;\n"
+    "in vec4 b_col;\n"
     "in vec2 b_tex_coord;\n"
     "uniform sampler2D tex0;\n"
     "out vec4 FragColor;\n"
     "void main(){\n"
-        "FragColor = texture(tex0, b_tex_coord)*vec4(b_col, 1.0);\n"
+        "FragColor = texture(tex0, b_tex_coord)*b_col;\n"
     "}\n"
 };
 
 GLFWwindow* glib_window;
 
 void (*glib_render_fun)(void) = NULL;
+void (*glib_framebuffer_resize_fun)(int width, int height) = NULL;
 
 unsigned int default_tex;
 
@@ -353,8 +381,6 @@ char* read_from_file(const char* file_name){
     return buffer;
 }
 
-
-
 void glib_init(void){
     if(!glfwInit()){
         fprintf(stderr, "ERROR: cannot init glfw\n");
@@ -373,6 +399,13 @@ void glib_init(void){
     printf("[INFO] Maximum nr of vertex attributes supported: %zu\n", nrAttributes);
 }
 
+void framebuff_resize(GLFWwindow* window, int width, int height){
+    glViewport(0, 0, width, height);
+    if(glib_framebuffer_resize_fun!=NULL){
+        glib_framebuffer_resize_fun(width, height);
+    }
+}
+
 void glib_create_window(int width, int height, const char* title){
     if(!(glib_window = glfwCreateWindow(width, height, title, NULL, NULL))){
         fprintf(stderr, "ERROR: cannot create window\n");
@@ -386,6 +419,8 @@ void glib_create_window(int width, int height, const char* title){
         exit(-1);
     }
 
+    glfwSetFramebufferSizeCallback(glib_window, framebuff_resize);
+    
     default_shader = glib_create_shader_from_memory(default_vert, default_frag);
 
     default_tex = glib_load_texture_2d_from_memory(default_tex_jpg_raw, GLIB_ARRAY_LEN(default_tex_jpg_raw), 0);
@@ -396,8 +431,12 @@ void glib_clear_color(float r, float g, float b, float a){
     glClearColor(r, g, b, a);
 }
 
-void glib_render_callback(void(*render)(void)){
-    glib_render_fun = render;
+void glib_set_render_callback(void (*render_fun)(void)){
+    glib_render_fun = render_fun;
+}
+
+void glib_set_framebuffer_resize_callback(void (*framebuffer_resize_fun)(int width, int height)){
+    glib_framebuffer_resize_fun =  framebuffer_resize_fun;
 }
 
 void glib_main_loop(void){
@@ -433,13 +472,13 @@ glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_len, unsigned
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indices_len, indices, GL_STATIC_DRAW);
     // Coord
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     // Color
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
     // Texture
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(7 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
@@ -460,7 +499,65 @@ glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_len, unsigned
     return obj;
 }
 
-void glib_draw_triangles(glib_obj_t* obj){
+glib_obj_t* glib_create_triangle_obj(float x1, float y1, float x2, float y2, float x3, float y3){
+    float vertices[] = {
+        x1, y1, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, x1, y1,
+        x2, y2, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, x2, y2,
+        x3, y3, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, x3, y3,
+    };
+    
+    unsigned int indices[] = {
+        0, 1, 2
+    };
+
+    return glib_create_obj(vertices, GLIB_ARRAY_LEN(vertices), indices, GLIB_ARRAY_LEN(indices));
+}
+glib_obj_t* glib_create_triangle_obj_ex(float x1, float y1, float x2, float y2, float x3, float y3, int rgba_hex){
+    float vertices[] = {
+        x1, y1, 0.0f, GLIB_HEX_TO_RGBA_F(rgba_hex), x1, y1,
+        x2, y2, 0.0f, GLIB_HEX_TO_RGBA_F(rgba_hex), x2, y2,
+        x3, y3, 0.0f, GLIB_HEX_TO_RGBA_F(rgba_hex), x3, y3,
+    };
+    
+    unsigned int indices[] = {
+        0, 1, 2
+    };
+
+    return glib_create_obj(vertices, GLIB_ARRAY_LEN(vertices), indices, GLIB_ARRAY_LEN(indices));
+}
+
+glib_obj_t* glib_create_quad_obj(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4){
+    float vertices[] = {
+        x1, y1, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, x1, y1,
+        x2, y2, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, x2, y2,
+        x3, y3, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, x3, y3,
+        x4, y4, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, x4, y4,
+    };
+    
+    unsigned int indices[] = {
+        0, 1, 2,
+        0, 2, 3,
+    };
+
+    return glib_create_obj(vertices, GLIB_ARRAY_LEN(vertices), indices, GLIB_ARRAY_LEN(indices));
+}
+glib_obj_t* glib_create_quad_obj_ex(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, int rgba_hex){
+    float vertices[] = {
+        x1, y1, 0.0f, GLIB_HEX_TO_RGBA_F(rgba_hex), x1, y1,
+        x2, y2, 0.0f, GLIB_HEX_TO_RGBA_F(rgba_hex), x2, y2,
+        x3, y3, 0.0f, GLIB_HEX_TO_RGBA_F(rgba_hex), x3, y3,
+        x4, y4, 0.0f, GLIB_HEX_TO_RGBA_F(rgba_hex), x4, y4,
+    };
+    
+    unsigned int indices[] = {
+        0, 1, 2,
+        0, 2, 3,
+    };
+
+    return glib_create_obj(vertices, GLIB_ARRAY_LEN(vertices), indices, GLIB_ARRAY_LEN(indices));
+}
+
+void glib_draw_obj(glib_obj_t* obj){
     glBindVertexArray(obj->VAO);
     glDrawElements(GL_TRIANGLES, obj->index_len, GL_UNSIGNED_INT, 0);
 }
