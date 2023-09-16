@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <gl/glew.h>
 #include <GLFW/glfw3.h>
@@ -44,12 +45,150 @@
 
 #include <cglm/cglm.h>
 
+#define FAST_OBJ_IMPLEMENTATION
+#include "fast_obj.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define GLIB_ARRAY_LEN(ARR) (sizeof(ARR)/sizeof(ARR[0]))
 #define GLIB_HEX_TO_RGBA_F(H) ((H>>24)&0xFF)/255.0f, ((H>>16)&0xFF)/255.0f, ((H>>8)&0xFF)/255.0f, ((H>>0)&0xFF)/255.0f
+
+#define GLIB_SUPPORTED_VERTICES  30000
+#define GLIB_SUPPORTED_UVS       30000
+#define GLIB_SUPPORTED_NORMALS   30000
+
+#define GLIB_MAX_KEYBOARD_KEY_SUPPORTED 350
+#define GLIB_MAX_MOUSE_BUTTON_SUPPORTED 8
+
+#define GLIB_MOUSE_BUTTON_LEFT 0
+#define GLIB_MOUSE_BUTTON_RIGHT 1
+#define GLIB_MOUSE_BUTTON_MIDDLE 2
+#define GLIB_MOUSE_BUTTON_LAST 8
+
+#define 	GLIB_KEY_UNKNOWN   -1
+#define 	GLIB_KEY_SPACE   32
+#define 	GLIB_KEY_APOSTROPHE   39 /* ' */
+#define 	GLIB_KEY_COMMA   44 /* , */
+#define 	GLIB_KEY_MINUS   45 /* - */
+#define 	GLIB_KEY_PERIOD   46 /* . */
+#define 	GLIB_KEY_SLASH   47 /* / */
+#define 	GLIB_KEY_0   48
+#define 	GLIB_KEY_1   49
+#define 	GLIB_KEY_2   50
+#define 	GLIB_KEY_3   51
+#define 	GLIB_KEY_4   52
+#define 	GLIB_KEY_5   53
+#define 	GLIB_KEY_6   54
+#define 	GLIB_KEY_7   55
+#define 	GLIB_KEY_8   56
+#define 	GLIB_KEY_9   57
+#define 	GLIB_KEY_SEMICOLON   59 /* ; */
+#define 	GLIB_KEY_EQUAL   61 /* = */
+#define 	GLIB_KEY_A   65
+#define 	GLIB_KEY_B   66
+#define 	GLIB_KEY_C   67
+#define 	GLIB_KEY_D   68
+#define 	GLIB_KEY_E   69
+#define 	GLIB_KEY_F   70
+#define 	GLIB_KEY_G   71
+#define 	GLIB_KEY_H   72
+#define 	GLIB_KEY_I   73
+#define 	GLIB_KEY_J   74
+#define 	GLIB_KEY_K   75
+#define 	GLIB_KEY_L   76
+#define 	GLIB_KEY_M   77
+#define 	GLIB_KEY_N   78
+#define 	GLIB_KEY_O   79
+#define 	GLIB_KEY_P   80
+#define 	GLIB_KEY_Q   81
+#define 	GLIB_KEY_R   82
+#define 	GLIB_KEY_S   83
+#define 	GLIB_KEY_T   84
+#define 	GLIB_KEY_U   85
+#define 	GLIB_KEY_V   86
+#define 	GLIB_KEY_W   87
+#define 	GLIB_KEY_X   88
+#define 	GLIB_KEY_Y   89
+#define 	GLIB_KEY_Z   90
+#define 	GLIB_KEY_LEFT_BRACKET   91 /* [ */
+#define 	GLIB_KEY_BACKSLASH   92 /* \ */
+#define 	GLIB_KEY_RIGHT_BRACKET   93 /* ] */
+#define 	GLIB_KEY_GRAVE_ACCENT   96 /* ` */
+#define 	GLIB_KEY_WORLD_1   161 /* non-US #1 */
+#define 	GLIB_KEY_WORLD_2   162 /* non-US #2 */
+#define 	GLIB_KEY_ESCAPE   256
+#define 	GLIB_KEY_ENTER   257
+#define 	GLIB_KEY_TAB   258
+#define 	GLIB_KEY_BACKSPACE   259
+#define 	GLIB_KEY_INSERT   260
+#define 	GLIB_KEY_DELETE   261
+#define 	GLIB_KEY_RIGHT   262
+#define 	GLIB_KEY_LEFT   263
+#define 	GLIB_KEY_DOWN   264
+#define 	GLIB_KEY_UP   265
+#define 	GLIB_KEY_PAGE_UP   266
+#define 	GLIB_KEY_PAGE_DOWN   267
+#define 	GLIB_KEY_HOME   268
+#define 	GLIB_KEY_END   269
+#define 	GLIB_KEY_CAPS_LOCK   280
+#define 	GLIB_KEY_SCROLL_LOCK   281
+#define 	GLIB_KEY_NUM_LOCK   282
+#define 	GLIB_KEY_PRINT_SCREEN   283
+#define 	GLIB_KEY_PAUSE   284
+#define 	GLIB_KEY_F1   290
+#define 	GLIB_KEY_F2   291
+#define 	GLIB_KEY_F3   292
+#define 	GLIB_KEY_F4   293
+#define 	GLIB_KEY_F5   294
+#define 	GLIB_KEY_F6   295
+#define 	GLIB_KEY_F7   296
+#define 	GLIB_KEY_F8   297
+#define 	GLIB_KEY_F9   298
+#define 	GLIB_KEY_F10   299
+#define 	GLIB_KEY_F11   300
+#define 	GLIB_KEY_F12   301
+#define 	GLIB_KEY_F13   302
+#define 	GLIB_KEY_F14   303
+#define 	GLIB_KEY_F15   304
+#define 	GLIB_KEY_F16   305
+#define 	GLIB_KEY_F17   306
+#define 	GLIB_KEY_F18   307
+#define 	GLIB_KEY_F19   308
+#define 	GLIB_KEY_F20   309
+#define 	GLIB_KEY_F21   310
+#define 	GLIB_KEY_F22   311
+#define 	GLIB_KEY_F23   312
+#define 	GLIB_KEY_F24   313
+#define 	GLIB_KEY_F25   314
+#define 	GLIB_KEY_KP_0   320
+#define 	GLIB_KEY_KP_1   321
+#define 	GLIB_KEY_KP_2   322
+#define 	GLIB_KEY_KP_3   323
+#define 	GLIB_KEY_KP_4   324
+#define 	GLIB_KEY_KP_5   325
+#define 	GLIB_KEY_KP_6   326
+#define 	GLIB_KEY_KP_7   327
+#define 	GLIB_KEY_KP_8   328
+#define 	GLIB_KEY_KP_9   329
+#define 	GLIB_KEY_KP_DECIMAL   330
+#define 	GLIB_KEY_KP_DIVIDE   331
+#define 	GLIB_KEY_KP_MULTIPLY   332
+#define 	GLIB_KEY_KP_SUBTRACT   333
+#define 	GLIB_KEY_KP_ADD   334
+#define 	GLIB_KEY_KP_ENTER   335
+#define 	GLIB_KEY_KP_EQUAL   336
+#define 	GLIB_KEY_LEFT_SHIFT   340
+#define 	GLIB_KEY_LEFT_CONTROL   341
+#define 	GLIB_KEY_LEFT_ALT   342
+#define 	GLIB_KEY_LEFT_SUPER   343
+#define 	GLIB_KEY_RIGHT_SHIFT   344
+#define 	GLIB_KEY_RIGHT_CONTROL   345
+#define 	GLIB_KEY_RIGHT_ALT   346
+#define 	GLIB_KEY_RIGHT_SUPER   347
+#define 	GLIB_KEY_MENU   348
+#define 	GLIB_KEY_LAST   GLIB_KEY_MENU
 
 /*!
     @breif this struct stores some data for a whole object and used in renderering that
@@ -89,6 +228,21 @@ typedef enum {
     GLIB_TEX_SLOT_COUNT,
 } glib_texture_slot;
 
+typedef struct {
+    vec3 position;
+    vec3 front;
+    vec3 up;
+    vec3 right;
+    vec3 world_up;
+    
+    float yaw;
+    float pitch;
+
+    float movement_speed;
+    float mouse_sensitivity;
+    float zoom;
+} glib_camera_t;
+
 /*!
     @brief Read content from a file into an allocated buffer
 
@@ -96,7 +250,7 @@ typedef enum {
 
     @return The file content in an allocated cstr
 */
-char* read_from_file(const char* file_name);
+char* glib_read_from_file(const char* file_name);
 
 /*!
     @brief Init OpenGL and other stuff
@@ -137,6 +291,52 @@ void glib_set_render_callback(void (*glib_render_fun)(void));
 void glib_set_framebuffer_resize_callback(void (*glib_framebuffer_resize_fun)(int width, int height));
 
 /*!
+    @brief Chack if a key is pressed on the keyboard
+
+    @param keycode the key what you want to check
+
+    @return If the key is pressed than return true (1), otherwise false (0)
+*/
+bool glib_is_keboard_pressed(int keycode);
+
+/*!
+    @brief Chack if a mouse button is pressed
+
+    @param mouse_button the button what you want to check
+
+    @return If the button is pressed than return true (1), otherwise false (0)
+*/
+bool glib_is_mouse_pressed(int mouse_button);
+
+/*!
+    @brief Check if the mouse is dragging
+
+    @return If the mouse dragging return true (1), otherwise false (0)
+*/
+bool glib_is_mouse_dragging(void);
+
+/*!
+    @brief Get the mouse X coordinate relative to the window
+
+    @return Return the X coordinate of the mouse a window normalized way 
+*/
+double glib_get_mouse_pos_x(void);
+
+/*!
+    @brief Get the mouse Y coordinate relative to the window
+
+    @return Return the Y coordinate of the mouse a window normalized way 
+*/
+double glib_get_mouse_pos_y(void);
+
+/*!
+    @brief Get what mouse button use for dragging
+
+    @return that mouse button what you are using when drag
+*/
+int glib_get_mouse_drag_button(void);
+
+/*!
     @brief Start the main loop and call the stored render function
 */
 void glib_main_loop(void);
@@ -155,6 +355,17 @@ void glib_main_loop(void);
 glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_len, unsigned int* indices, unsigned int indices_len);
 
 /*!
+    @brief Create an object from your vertices and indices. This function also stores the VAO, VBO, EBO which is usefull for renderering this object
+
+    @param vertices the pointer to your vertices array
+    @param vertices_len the len of vertices array
+
+    @return The object struct which stores some data
+
+*/
+glib_obj_t* glib_create_obj_from_vert(float* vertices, unsigned int vertices_len);
+
+/*!
     @brief Create a triangle object from coords
 
     @return The glib object reference which stores some data
@@ -170,8 +381,29 @@ glib_obj_t* glib_create_triangle_obj(float x1, float y1, float x2, float y2, flo
 */
 glib_obj_t* glib_create_triangle_obj_ex(float x1, float y1, float x2, float y2, float x3, float y3, int rgba_hex);
 
+/*!
+    @brief Create a quad object from coords
+
+    @return The glib object reference which stores some data
+*/
 glib_obj_t* glib_create_quad_obj(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
+
+/*!
+    @brief Create a quad object from coords
+    
+    @param rgba_hex A color format example r:255 g:0 b:0 a:255 => 0xFF0000FF
+
+    @return The glib object reference which stores some data
+*/
 glib_obj_t* glib_create_quad_obj_ex(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, int rgba_hex);
+
+
+/*!
+    @brief Load models with OBJ file format
+
+    @param file_path the path to your model
+*/
+glib_obj_t* glib_load_obj(const char* file_path);
 
 /*!
     @brief  Draw triangles using an glib obj
@@ -284,7 +516,7 @@ void glib_use_texture_2d(unsigned int texture, glib_texture_slot slot);
 
 #ifdef GLIB_IMPLEMENTATION
 
-const char default_tex_jpg_raw[] = {0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x60, 
+const char glib_default_tex_jpg_raw[] = {0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x60, 
 0x00, 0x60, 0x00, 0x00, 0xFF, 0xDB, 0x00, 0x43, 0x00, 0x02, 0x01, 0x01, 0x02, 0x01, 0x01, 0x02, 
 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x05, 0x03, 0x03, 0x03, 0x03, 0x03, 0x06, 0x04, 
 0x04, 0x03, 0x05, 0x07, 0x06, 0x07, 0x07, 0x07, 0x06, 0x07, 0x07, 0x08, 0x09, 0x0B, 0x09, 0x08, 
@@ -325,21 +557,24 @@ const char default_tex_jpg_raw[] = {0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x
 0xFA, 0xFF, 0xDA, 0x00, 0x0C, 0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3F, 0x00, 0xFD, 
 0xFC, 0xA2, 0x8A, 0x28, 0x03, 0xFF, 0xD9};
 
-const char* default_vert = {
+const char* glib_default_vert = {
     "#version 330 core\n"
     "layout (location = 0) in vec3 pos;\n"
     "layout (location = 1) in vec4 col;\n"
     "layout (location = 2) in vec2 tex_coord;\n"
+    "uniform mat4 model;\n"
+    "uniform mat4 view;\n"
+    "uniform mat4 proj;\n"
     "out vec4 b_col;\n"
     "out vec2 b_tex_coord;\n"
     "void main(){\n"
         "b_col = col;\n"
         "b_tex_coord = tex_coord;\n"
-        "gl_Position = vec4(pos, 1.0);\n"
+        "gl_Position = proj*view*model*vec4(pos, 1.0);\n"
     "}\n"
 };
 
-const char* default_frag = {
+const char* glib_default_frag = {
     "#version 330 core\n"
     "in vec4 b_col;\n"
     "in vec2 b_tex_coord;\n"
@@ -352,14 +587,30 @@ const char* default_frag = {
 
 GLFWwindow* glib_window;
 
+unsigned int glib_window_width;
+unsigned int glib_window_height;
+
 void (*glib_render_fun)(void) = NULL;
 void (*glib_framebuffer_resize_fun)(int width, int height) = NULL;
 
-unsigned int default_tex;
+unsigned int glib_default_tex;
 
-unsigned int default_shader;
+unsigned int glib_default_shader;
 
-char* read_from_file(const char* file_name){
+bool glib_keyboard_pressed[GLIB_MAX_KEYBOARD_KEY_SUPPORTED];
+bool glib_mouse_pressed[GLIB_MAX_MOUSE_BUTTON_SUPPORTED];
+bool glib_mouse_dragging;
+int glib_mouse_drag_button;
+double glib_mouse_pos_x;
+double glib_mouse_pos_y;
+
+const float YAW         = -90.0f;
+const float PITCH       =  0.0f;
+const float SPEED       =  2.5f;
+const float SENSITIVITY =  0.1f;
+const float ZOOM        =  45.0f;
+
+char* glib_read_from_file(const char* file_name){
     FILE *fp;
     long size;
     char *buffer;
@@ -399,10 +650,40 @@ void glib_init(void){
     printf("[INFO] Maximum nr of vertex attributes supported: %zu\n", nrAttributes);
 }
 
-void framebuff_resize(GLFWwindow* window, int width, int height){
+static void glib_framebuff_resize(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
     if(glib_framebuffer_resize_fun!=NULL){
         glib_framebuffer_resize_fun(width, height);
+    }
+    glib_window_width = width;
+    glib_window_height = height;
+}
+
+static void glib_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+    if(action==GLFW_PRESS){
+        glib_keyboard_pressed[key] = true;
+    }else if(action==GLFW_RELEASE){
+        glib_keyboard_pressed[key] = false;
+    }
+}
+
+static void glib_cursor_position_callback(GLFWwindow* window, double xpos, double ypos){
+    glib_mouse_pos_x = xpos;
+    glib_mouse_pos_y = ypos;
+}
+
+static void glib_mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
+    if(action==GLFW_PRESS){
+        glib_mouse_pressed[button] = true;
+        if(!glib_mouse_dragging){
+            glib_mouse_dragging = true;
+            glib_mouse_drag_button = button;
+        }
+    }else if(action==GLFW_RELEASE){
+        glib_mouse_pressed[button] = false;
+        if(button==glib_mouse_drag_button){
+            glib_mouse_dragging = false;
+        }
     }
 }
 
@@ -419,11 +700,17 @@ void glib_create_window(int width, int height, const char* title){
         exit(-1);
     }
 
-    glfwSetFramebufferSizeCallback(glib_window, framebuff_resize);
-    
-    default_shader = glib_create_shader_from_memory(default_vert, default_frag);
+    glfwSetFramebufferSizeCallback(glib_window, glib_framebuff_resize);
+    glib_window_width = width;
+    glib_window_height = height;
 
-    default_tex = glib_load_texture_2d_from_memory(default_tex_jpg_raw, GLIB_ARRAY_LEN(default_tex_jpg_raw), 0);
+    glfwSetKeyCallback(glib_window, glib_key_callback);
+    glfwSetCursorPosCallback(glib_window, glib_cursor_position_callback);
+    glfwSetMouseButtonCallback(glib_window, glib_mouse_button_callback);
+    
+    glib_default_shader = glib_create_shader_from_memory(glib_default_vert, glib_default_frag);
+
+    glib_default_tex = glib_load_texture_2d_from_memory(glib_default_tex_jpg_raw, GLIB_ARRAY_LEN(glib_default_tex_jpg_raw), 0);
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -439,12 +726,42 @@ void glib_set_framebuffer_resize_callback(void (*framebuffer_resize_fun)(int wid
     glib_framebuffer_resize_fun =  framebuffer_resize_fun;
 }
 
+bool glib_is_keboard_pressed(int keycode){
+    if(keycode<GLIB_MAX_KEYBOARD_KEY_SUPPORTED){
+        return glib_keyboard_pressed[keycode];
+    }
+    return false;
+}
+
+bool glib_is_mouse_pressed(int mouse_button){
+    if(mouse_button<GLIB_MAX_MOUSE_BUTTON_SUPPORTED){
+        return glib_mouse_pressed[mouse_button];
+    }
+    return false;
+}
+
+bool glib_is_mouse_dragging(void){
+    return glib_mouse_dragging;
+}
+
+int glib_get_mouse_drag_button(void){
+    return glib_mouse_drag_button;
+}
+
+double glib_get_mouse_pos_x(void){
+    return (glib_mouse_pos_x/(double)glib_window_width)*2.0-1.0;
+}
+
+double glib_get_mouse_pos_y(void){
+    return (glib_mouse_pos_y/(double)glib_window_height)*2.0-1.0;
+}
+
 void glib_main_loop(void){
     while(!glfwWindowShouldClose(glib_window)){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        glib_use_texture_2d(default_tex, GLIB_TEX_SLOT0);
-        glib_use_shader(default_shader);
+        glib_use_texture_2d(glib_default_tex, GLIB_TEX_SLOT0);
+        glib_use_shader(glib_default_shader);
         if(glib_render_fun!=NULL){
             glib_render_fun();
         }
@@ -496,6 +813,42 @@ glib_obj_t* glib_create_obj(float* vertices, unsigned int vertices_len, unsigned
     obj->vertex_len = vertices_len;
     obj->indices = indices;
     obj->index_len = indices_len;
+    return obj;
+}
+
+glib_obj_t* glib_create_obj_from_vert(float* vertices, unsigned int vertices_len){
+    unsigned int VAO, VBO, EBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertices_len, vertices, GL_STATIC_DRAW);
+
+    // Coord
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // Color
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(1);
+    // Texture
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(7 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    
+    // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    glBindVertexArray(0);
+    glib_obj_t* obj = (glib_obj_t*)malloc(sizeof(glib_obj_t));
+    obj->VAO = VAO;
+    obj->VBO = VBO;
+    obj->vertices = vertices;
+    obj->vertex_len = vertices_len;
     return obj;
 }
 
@@ -559,7 +912,11 @@ glib_obj_t* glib_create_quad_obj_ex(float x1, float y1, float x2, float y2, floa
 
 void glib_draw_obj(glib_obj_t* obj){
     glBindVertexArray(obj->VAO);
-    glDrawElements(GL_TRIANGLES, obj->index_len, GL_UNSIGNED_INT, 0);
+    if(obj->index_len==0){
+        glDrawArrays(GL_TRIANGLES, 0, obj->vertex_len);
+    }else{
+        glDrawElements(GL_TRIANGLES, obj->index_len, GL_UNSIGNED_INT, 0);
+    }
 }
 
 void glib_wired_draw(){
@@ -578,7 +935,7 @@ int compile_shader(GLenum shader_type, const char* shader_thing, int from_memory
         shader_source = shader_thing;
         printf("%s\n", shader_source);
     }else{
-        shader_source = read_from_file(shader_thing); 
+        shader_source = glib_read_from_file(shader_thing); 
         printf("%s: %s\n", shader_thing, shader_source);
     }
 

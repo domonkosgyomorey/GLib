@@ -13,3 +13,5 @@ examples:
 	${CC} src/example/uniform_example.c 	-o bin/uniform_example 		${CFLAGS} ${CLIBS}
 	${CC} src/example/texture_example.c 	-o bin/texture_example 		${CFLAGS} ${CLIBS}
 	${CC} src/example/quad_example.c 		-o bin/quad_example 		${CFLAGS} ${CLIBS}
+	${CC} src/example/keyboard_example.c 	-o bin/keyboard_example  	${CFLAGS} ${CLIBS}
+	${CC} src/example/mouse_example.c 		-o bin/mouse_example  		${CFLAGS} ${CLIBS}

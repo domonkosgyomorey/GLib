@@ -1,5 +1,5 @@
 #define GLIB_IMPLEMENTATION
-#include "glib.h"
+#include "../glib.h"
 
 glib_obj_t* quad_obj;
 unsigned int my_shader;
